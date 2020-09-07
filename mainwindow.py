@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QModelIndex
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from formlayout.formlayout import fedit
 from instrumentcontroller import InstrumentController

@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QRunnable, QThreadPool
-from PyQt5.QtWidgets import QWidget, QComboBox, QLabel, QMessageBox, QDoubleSpinBox, QSpinBox
+from PyQt5.QtWidgets import QWidget, QDoubleSpinBox
 
 from deviceselectwidget import DeviceSelectWidget
 
