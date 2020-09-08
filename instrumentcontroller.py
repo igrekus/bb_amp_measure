@@ -7,6 +7,10 @@ from instr.instrumentfactory import NetworkAnalyzerFactory, mock_enabled
 from measureresult import MeasureResult
 
 
+MHz = 1_000_000
+GHz = 1_000_000_000
+
+
 class InstrumentController(QObject):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -17,12 +21,9 @@ class InstrumentController(QObject):
 
         self.deviceParams = {
             'Усилитель 1': {
-                'F': [1.15, 1.35, 1.75, 1.92, 2.25, 2.54, 2.7, 3, 3.47, 3.86, 4.25],
-                'mul': 2,
-                'P1': 15,
-                'P2': 21,
-                'Istat': [None, None, None],
-                'Idyn': [None, None, None]
+                'Fstart': 10 * MHz,
+                'Fend': 9 * GHz,
+                'Pin': -20,
             },
         }
 
@@ -39,7 +40,7 @@ class InstrumentController(QObject):
         }
 
         self.span = 0.1
-        self.sweep_points = 81
+        self.sweep_points = 12801
         self.cal_set = 'Upr_tst'
 
         self._instruments = dict()
@@ -93,7 +94,7 @@ class InstrumentController(QObject):
         print(f'launch measure with {param} {secondary}')
 
         self._clear()
-        self._init(secondary)
+        self._init(param, secondary)
 
         res = self._measure_s_params(param, secondary)
 
@@ -103,23 +104,20 @@ class InstrumentController(QObject):
         self._freqs.clear()
         self._mag_s11s.clear()
 
-    def _init(self, params):
+    def _init(self, primary, secondary):
         pna = self._instruments['Анализатор']
 
         pna.send('SYST:PRES')
         pna.query('*OPC?')
         # pna.send('SENS1:CORR ON')
 
-        pna.send('CALC1:PAR:DEF "CH1_S21",S21')
-
-        # c:\program files\agilent\newtowrk analyzer\UserCalSets
-        pna.send(f'SENS1:CORR:CSET:ACT "{self.cal_set}",1')
-        # pna.send('SENS2:CORR:CSET:ACT "-20dBm_1.1-1.4G",1')
+        pna.send('CALC1:PAR:DEF "CH1_S11",S11')
 
         pna.send(f'SENS1:SWE:POIN {self.sweep_points}')
 
-        pna.send(f'SENS1:FREQ:STAR {params["F1"]}GHz')
-        pna.send(f'SENS1:FREQ:STOP {params["F2"]}GHz')
+        pna.send(f'SENS1:FREQ:STAR {primary["Fstart"]}GHz')
+        pna.send(f'SENS1:FREQ:STOP {primary["Fend"]}GHz')
+        pna.send(f'SENS1:POW:ATT AREC, {primary["Pin"]}')
 
         pna.send('SENS1:SWE:MODE CONT')
         pna.send(f'FORM:DATA ASCII')
@@ -129,24 +127,16 @@ class InstrumentController(QObject):
 
         out = []
 
-        values = [1, 2, 3]
-        if mock_enabled:
-            values = [0.1, 0.25, 0.5, 0.75, 1.25, 1.5, 1.75, 1, 10.25, 10.5, 10.75, 10, 11.25, 11.5, 11.75, 11, 12,
-                      2.25, 2.5, 2.75, 2, 3.25, 3.5, 3.75, 3, 4.25, 4.5, 4.75, 4, 5.25, 5.5, 5.75, 5, 6.25, 6.5, 6.75,
-                      6, 7.25, 7.5, 7.75, 7, 8.25, 8.5, 8.75, 8, 9.25, 9.5, 9.75, 9]
-
-        for ucontrol in values:
+        for _ in range(10):
             pna.send(f'CALC1:PAR:SEL "CH1_S21"')
             pna.query('*OPC?')
             res = pna.query(f'CALC1:DATA:SNP? 2')
 
-            pna.send(f'CALC:DATA:SNP:PORTs:Save "1,2", "d:/ksa/psm_analog_s2p/s{str(f"{ucontrol:.01f}").replace(".", "_")}.s2p"')
-            pna.send(f'MMEM:STOR "d:/ksa/psm_analog_ports2/s{str(f"{ucontrol:.01f}").replace(".", "_")}.s2p"')
-
             if not mock_enabled:
                 time.sleep(0.5)
 
-            out = [1, 2, 3]
+            out.append(_)
+            # out += parse_float_list(res)
         return out
 
     @pyqtSlot(dict)
