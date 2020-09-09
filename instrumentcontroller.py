@@ -20,7 +20,7 @@ class InstrumentController(QObject):
         }
 
         self.deviceParams = {
-            'Усилитель 1': {
+            'А1449-01 (тип 1)': {
                 'Fstart': 10 * MHz,
                 'Fend': 9 * GHz,
                 'Pin': -20,
@@ -76,11 +76,11 @@ class InstrumentController(QObject):
 
     def _check(self, device, secondary):
         print(f'launch check with {self.deviceParams[device]} {self.secondaryParams}')
-        return self._runCheck(self.deviceParams[device], self.secondaryParams)
+        return self._runCheck(self.deviceParams[device], self.secondaryParams, device)
 
-    def _runCheck(self, param, secondary):
+    def _runCheck(self, param, secondary, device):
         print(f'run check with {param}, {secondary}')
-        return True
+        return self.result.readTaskTable(device)
 
     def measure(self, params):
         print(f'call measure with {params}')
