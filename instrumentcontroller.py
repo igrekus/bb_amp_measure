@@ -27,9 +27,9 @@ class InstrumentController(QObject):
             },
         }
 
-        if isfile('./params.ini'):
+        if isfile('./devices.json'):
             import ast
-            with open('./params.ini', 'rt', encoding='utf-8') as f:
+            with open('./devices.json', 'rt', encoding='utf-8') as f:
                 raw = ''.join(f.readlines())
                 self.deviceParams = ast.literal_eval(raw)
 
