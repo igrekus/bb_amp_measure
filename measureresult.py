@@ -58,9 +58,12 @@ class MeasureResult:
         headers = [ws._get_cell(1, col).value for col in range(2, ws.max_column + 1)]
         gens = []
         for i, _ in enumerate(headers):
-            span = float(ws._get_cell(2, i + 2).value)
-            step = float(ws._get_cell(3, i + 2).value)
-            mean = float(ws._get_cell(4, i + 2).value)
+            try:
+                span = float(ws._get_cell(2, i + 2).value)
+                step = float(ws._get_cell(3, i + 2).value)
+                mean = float(ws._get_cell(4, i + 2).value)
+            except ValueError:
+                span, step, mean = ('-', '-', '-')
             gens.append((span, step, mean))
 
         self.headers = headers
