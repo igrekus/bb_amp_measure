@@ -1,3 +1,4 @@
+import random
 import time
 
 from os.path import isfile
@@ -111,13 +112,23 @@ class InstrumentController(QObject):
         pna.query('*OPC?')
         # pna.send('SENS1:CORR ON')
 
-        pna.send('CALC1:PAR:DEF "CH1_S11",S11')
+        pna.send(f'SYSTem:FPRESet')
+
+        pna.send('CALC1:PAR:DEF:EXT "CH1_S11",S11')
+        # pna.send('CALC1:PAR:DEF:EXT "CH1_S21",S21')
+
+        pna.send(f'DISPlay:WINDow1:STATe ON')
+        pna.send(f"DISPlay:WINDow1:TRACe1:FEED 'CH1_S11'")
+        # pna.send(f"DISPlay:WINDow1:TRACe2:FEED 'CH1_S21'")
+
+        # pna.send(f'SENSe{chan}:SWEep:TRIGger:POINt OFF')
+        pna.send(f'SOUR1:POW1 -20dbm')
 
         pna.send(f'SENS1:SWE:POIN {self.sweep_points}')
 
-        pna.send(f'SENS1:FREQ:STAR {primary["Fstart"]}GHz')
-        pna.send(f'SENS1:FREQ:STOP {primary["Fend"]}GHz')
-        pna.send(f'SENS1:POW:ATT AREC, {primary["Pin"]}')
+        pna.send(f'SENS1:FREQ:STAR {primary["Fstart"]}')
+        pna.send(f'SENS1:FREQ:STOP {primary["Fend"]}')
+        # pna.send(f'SENS1:POW:ATT AREC, {primary["Pin"]}')
 
         pna.send('SENS1:SWE:MODE CONT')
         pna.send(f'FORM:DATA ASCII')
@@ -127,16 +138,33 @@ class InstrumentController(QObject):
 
         out = []
 
-        for _ in range(10):
-            pna.send(f'CALC1:PAR:SEL "CH1_S21"')
+        for p in [-15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16, -15, -16]:
+            pna.send(f'CALC1:PAR:SEL "CH1_S11"')
             pna.query('*OPC?')
-            res = pna.query(f'CALC1:DATA:SNP? 2')
+            # res = pna.query(f'CALC1:DATA:SNP? 1')
 
             if not mock_enabled:
                 time.sleep(0.5)
 
-            out.append(_)
-            # out += parse_float_list(res)
+            pna.send(f'SOUR1:POW1 {p}dbm')
+
+            # pna.send(f'CALC1:PAR:SEL "CH1_S21"')
+            # pna.query('*OPC?')
+
+            if not mock_enabled:
+                time.sleep(0.5)
+
+            offs = random.randint(-4, 4)
+            pna.send(f'CALC:OFFS:MAGN {offs}')
+            slop = random.random()
+            pna.send(f'CALC:OFFS:MAGN:SLOP {slop}')
+
+            if not mock_enabled:
+                time.sleep(0.1)
+
+            pna.send(f'DISP:WIND:TRAC:Y:AUTO')
+
+            out.append(p)
         return out
 
     @pyqtSlot(dict)
